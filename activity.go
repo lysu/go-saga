@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Func func(ctx context.Context) error
+type Func func(ctx ActivityContext) error
 
 type Activitor struct {
 	ID        uint64
@@ -41,10 +41,10 @@ func (a *Activitor) Then(doFunc Func, args ...interface{}) func(backFunc Func, a
 		doParams = append(doParams, reflect.ValueOf(arg))
 	}
 	newAction := Action{
-		Status:ActionStarted,
-		StartTime:time.Now(),
-		DoFunc:reflect.ValueOf(doFunc),
-		DoParams:doParams,
+		Status:    ActionStarted,
+		StartTime: time.Now(),
+		DoFunc:    reflect.ValueOf(doFunc),
+		DoParams:  doParams,
 	}
 	a.Actions = append(a.Actions, newAction)
 	return func(backFunc Func, args ...interface{}) *Activitor {

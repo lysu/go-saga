@@ -1,27 +1,26 @@
 package activity_test
 
 import (
-	"testing"
-	"github.com/lysu/one-activity"
-	"golang.org/x/net/context"
 	"fmt"
+	"github.com/lysu/one-activity"
+	"testing"
 )
 
-func Call1(ctx context.Context) error {
+func Call1(ctx activity.ActivityContext) error {
 	fmt.Println("call1")
 	return nil
 }
 
-func Rollback1(ctx context.Context) error {
+func Rollback1(ctx activity.ActivityContext) error {
 	return nil
 }
 
-func Call2(ctx context.Context) error {
+func Call2(ctx activity.ActivityContext) error {
 	fmt.Println("call2")
 	return nil
 }
 
-func Rollback2(ctx context.Context) error {
+func Rollback2(ctx activity.ActivityContext) error {
 	return nil
 }
 
@@ -37,10 +36,10 @@ func TestOneActivityExec(t *testing.T) {
 	initIt()
 
 	// execute activities
-	ctx := context.TODO()
+	ctx := activity.ActivityContext{}
 	activity.Start(3).
 		Then(Call1, 1)(Rollback1).
 		Then(Call2, 2, "233")(Rollback2, 2, "233").
-	   Run(ctx)
+		Run(ctx)
 
 }

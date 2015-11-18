@@ -2,13 +2,14 @@ package activity
 
 import "reflect"
 
-type Registry map[string]reflect.Method
+type Registry map[string]reflect.Value
 
-func NewRegistry() Registry {
-	return make(Registry)
+func NewRegistry() *Registry {
+	r := make(Registry)
+	return &r
 }
 
-func (r *Registry) Add(funcID string, method reflect.Method) *Registry {
-	(*r)[funcID] = method
+func (r *Registry) Add(funcID string, method interface{}) *Registry {
+	(*r)[funcID] = reflect.ValueOf(method)
 	return r
 }
