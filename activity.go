@@ -1,7 +1,6 @@
 package activity
 
 import (
-	"golang.org/x/net/context"
 	"reflect"
 	"time"
 )
@@ -58,6 +57,14 @@ func (a *Activitor) Then(doFunc Func, args ...interface{}) func(backFunc Func, a
 	}
 }
 
-func (a *Activitor) Run(ctx context.Context) error {
+func (a *Activitor) Run(ctx ActivityContext) error {
+	err := a.SaveLog()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *Activitor) SaveLog() error {
 	return nil
 }
