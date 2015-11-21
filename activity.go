@@ -13,6 +13,7 @@ type Activitor struct {
 	StartTime time.Time
 	EndTime   time.Time
 	Actions   []Action
+	Registry  *Registry
 }
 
 type Action struct {
@@ -25,12 +26,13 @@ type Action struct {
 	RollbackParams []reflect.Value
 }
 
-func Start(biz int) *Activitor {
+func Start(reg *Registry, biz int) *Activitor {
 	return &Activitor{
 		ID:        1,
 		Status:    ActivityStarted,
 		StartTime: time.Now(),
 		Actions:   []Action{},
+		Registry:  reg,
 	}
 }
 
@@ -66,5 +68,34 @@ func (a *Activitor) Run(ctx ActivityContext) error {
 }
 
 func (a *Activitor) SaveLog() error {
+
 	return nil
+}
+
+func activeToRecord(a *Activitor) ActivityRecord {
+	r := ActivityRecord{
+		ID:        a.ID,
+		Status:    a.Status,
+		StartTime: a.StartTime,
+		EndTime:   a.EndTime,
+	}
+	return r
+}
+
+func actionsToRecord(a *Activitor) []ActionRecord {
+	registry := a.Registry
+	var rs []ActionRecord
+	for _, action := range a.Actions {
+		rs = append(rs, ActionRecord{
+			Status:         action.Status,
+			StartTime:      action.StartTime,
+			EndTime:        action.EndTime,
+			ActivityID:     a.ID,
+			DoFuncID:       registry.FindFuncID(action.DoFunc),
+//			DoParams:
+			RollbackFuncID: registry.FindFuncID(action.RollbackFunc),
+//			RollbackParams:
+		})
+	}
+	return rs
 }

@@ -24,6 +24,8 @@ func Rollback2(ctx activity.ActivityContext) error {
 	return nil
 }
 
+var reg *activity.Registry
+
 func initIt() {
 	activity.NewRegistry().
 		Add("call1", Call1).Add("call2", Call2).
@@ -37,7 +39,7 @@ func TestOneActivityExec(t *testing.T) {
 
 	// execute activities
 	ctx := activity.ActivityContext{}
-	activity.Start(3).
+	activity.Start(reg, 3).
 		Then(Call1, 1)(Rollback1).
 		Then(Call2, 2, "233")(Rollback2, 2, "233").
 		Run(ctx)
