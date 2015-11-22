@@ -14,6 +14,7 @@ type Activitor struct {
 	EndTime   time.Time
 	Actions   []Action
 	Registry  *Registry
+	Storage   *DBStorage
 }
 
 type Action struct {
@@ -26,13 +27,14 @@ type Action struct {
 	RollbackParams []reflect.Value
 }
 
-func Start(reg *Registry, biz int) *Activitor {
+func Start(storage *DBStorage, reg *Registry, biz int) *Activitor {
 	return &Activitor{
 		ID:        1,
 		Status:    ActivityStarted,
 		StartTime: time.Now(),
 		Actions:   []Action{},
 		Registry:  reg,
+		Storage: storage,
 	}
 }
 
@@ -68,7 +70,16 @@ func (a *Activitor) Run(ctx ActivityContext) error {
 }
 
 func (a *Activitor) SaveLog() error {
-
+	ar := activeToRecord(a)
+	err := a.Storage.saveActivityRecord(ar)
+	if err != nil {
+		return err
+	}
+	ars := actionsToRecord(a)
+	err = a.Storage.saveActionRecord(ars)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
