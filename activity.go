@@ -34,7 +34,7 @@ func Start(storage *DBStorage, reg *Registry, biz int) *Activitor {
 		StartTime: time.Now(),
 		Actions:   []Action{},
 		Registry:  reg,
-		Storage: storage,
+		Storage:   storage,
 	}
 }
 
@@ -103,10 +103,14 @@ func actionsToRecord(a *Activitor) []ActionRecord {
 			EndTime:        action.EndTime,
 			ActivityID:     a.ID,
 			DoFuncID:       registry.FindFuncID(action.DoFunc),
-//			DoParams:
+			DoParams:       valueArrayToString(action.DoParams),
 			RollbackFuncID: registry.FindFuncID(action.RollbackFunc),
-//			RollbackParams:
+			RollbackParams: valueArrayToString(action.RollbackParams),
 		})
 	}
 	return rs
+}
+
+func valueArrayToString(values []reflect.Value) string {
+	return ""
 }
