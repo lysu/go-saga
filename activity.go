@@ -71,7 +71,7 @@ func (a *Activitor) Run(ctx ActivityContext) error {
 
 func (a *Activitor) SaveLog() error {
 	ar := activeToRecord(a)
-	err := a.Storage.saveActivityRecord(ar)
+	err := a.Storage.saveActivityRecord(&ar)
 	if err != nil {
 		return err
 	}
@@ -112,5 +112,8 @@ func actionsToRecord(a *Activitor) []ActionRecord {
 }
 
 func valueArrayToString(values []reflect.Value) string {
+	for _, value := range values {
+		value.Type()
+	}
 	return ""
 }
