@@ -1,6 +1,8 @@
 package activity
 
 import (
+	"bytes"
+	"encoding/json"
 	"reflect"
 	"time"
 )
@@ -70,12 +72,12 @@ func (a *Activitor) Run(ctx ActivityContext) error {
 }
 
 func (a *Activitor) SaveLog() error {
-	ar := activeToRecord(a)
+	ar := a.activeToRecord()
 	err := a.Storage.saveActivityRecord(&ar)
 	if err != nil {
 		return err
 	}
-	ars := actionsToRecord(a)
+	ars := a.actionsToRecord()
 	err = a.Storage.saveActionRecord(ars)
 	if err != nil {
 		return err
@@ -83,7 +85,7 @@ func (a *Activitor) SaveLog() error {
 	return nil
 }
 
-func activeToRecord(a *Activitor) ActivityRecord {
+func (a *Activitor) activeToRecord() ActivityRecord {
 	r := ActivityRecord{
 		ID:        a.ID,
 		Status:    a.Status,
@@ -93,7 +95,7 @@ func activeToRecord(a *Activitor) ActivityRecord {
 	return r
 }
 
-func actionsToRecord(a *Activitor) []ActionRecord {
+func (a *Activitor) actionsToRecord() []ActionRecord {
 	registry := a.Registry
 	var rs []ActionRecord
 	for _, action := range a.Actions {
@@ -103,17 +105,32 @@ func actionsToRecord(a *Activitor) []ActionRecord {
 			EndTime:        action.EndTime,
 			ActivityID:     a.ID,
 			DoFuncID:       registry.FindFuncID(action.DoFunc),
-			DoParams:       valueArrayToString(action.DoParams),
+			DoParams:       a.valueArrayToString(action.DoParams),
 			RollbackFuncID: registry.FindFuncID(action.RollbackFunc),
-			RollbackParams: valueArrayToString(action.RollbackParams),
+			RollbackParams: a.valueArrayToString(action.RollbackParams),
 		})
 	}
 	return rs
 }
 
-func valueArrayToString(values []reflect.Value) string {
-	for _, value := range values {
-		value.Type()
+func (a *Activitor) valueArrayToString(values []reflect.Value) string {
+	var buf bytes.Buffer
+	for i, value := range values {
+		if i != 0 {
+			buf.WriteString(",")
+		}
+		typ := a.Registry.FindTypeName(value.Type())
+		buf.WriteString(typ)
+		buf.WriteString(":")
+		buf.WriteString(toJson(value.Interface()))
 	}
-	return ""
+	return buf.String()
+}
+
+func toJson(value interface{}) string {
+	s, err := json.Marshal(value)
+	if err != nil {
+		panic(err)
+	}
+	return s
 }
