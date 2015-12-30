@@ -1,23 +1,24 @@
 package activity
 
-import "database/sql"
-
-type DBStorage struct {
-	db *sql.DB
+type Storage interface {
+	saveActivityRecord(activityID uint64, data string) error
+	saveActionRecord(actionRecords []actionData) error
 }
 
-func NewStorage(host string) (*DBStorage, error) {
-	d, err := sql.Open("mysql", host)
-	if err != nil {
-		return nil, err
-	}
-	return &DBStorage{d}, nil
+type MemStorage struct {
+	data map[string]string
 }
 
-func (s *DBStorage) saveActivityRecord(r *ActivityRecord) error {
+func NewMemStorage() (Storage, error) {
+	return &MemStorage{
+		data: make(map[string]string),
+	}, nil
+}
+
+func (s *MemStorage) saveActivityRecord(activityID uint64, data string) error {
 	return nil
 }
 
-func (s *DBStorage) saveActionRecord(rs []ActionRecord) error {
+func (s *MemStorage) saveActionRecord(actionRecords []actionData) error {
 	return nil
 }

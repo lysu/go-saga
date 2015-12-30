@@ -9,14 +9,14 @@ import (
 
 type Func func(ctx ActivityContext) error
 
-type Activitor struct {
+type Activity struct {
 	ID        uint64
 	Status    ActivityStatus
 	StartTime time.Time
 	EndTime   time.Time
 	Actions   []Action
 	Registry  *Registry
-	Storage   *DBStorage
+	Storage   Storage
 }
 
 type Action struct {
@@ -29,8 +29,8 @@ type Action struct {
 	RollbackParams []reflect.Value
 }
 
-func Start(storage *DBStorage, reg *Registry, biz int) *Activitor {
-	return &Activitor{
+func Start(storage Storage, reg *Registry, biz int) *Activity {
+	return &Activity{
 		ID:        1,
 		Status:    ActivityStarted,
 		StartTime: time.Now(),
@@ -40,7 +40,7 @@ func Start(storage *DBStorage, reg *Registry, biz int) *Activitor {
 	}
 }
 
-func (a *Activitor) Then(doFunc Func, args ...interface{}) func(backFunc Func, args ...interface{}) *Activitor {
+func (a *Activity) Then(doFunc Func, args ...interface{}) func(backFunc Func, args ...interface{}) *Activity {
 	var doParams []reflect.Value
 	for _, arg := range args {
 		doParams = append(doParams, reflect.ValueOf(arg))
@@ -52,7 +52,7 @@ func (a *Activitor) Then(doFunc Func, args ...interface{}) func(backFunc Func, a
 		DoParams:  doParams,
 	}
 	a.Actions = append(a.Actions, newAction)
-	return func(backFunc Func, args ...interface{}) *Activitor {
+	return func(backFunc Func, args ...interface{}) *Activity {
 		var backParams []reflect.Value
 		for _, arg := range args {
 			backParams = append(backParams, reflect.ValueOf(arg))
@@ -63,39 +63,54 @@ func (a *Activitor) Then(doFunc Func, args ...interface{}) func(backFunc Func, a
 	}
 }
 
-func (a *Activitor) Run(ctx ActivityContext) error {
+func (a *Activity) Exec(ctx ActivityContext) {
+	carg := reflect.ValueOf(ctx)
+	for _, action := range a.Actions {
+		action.DoFunc.Call([]reflect.Value{carg})
+	}
+}
+
+func (a *Activity) Run(ctx ActivityContext) error {
 	err := a.SaveLog()
 	if err != nil {
 		return err
 	}
+	a.Exec(ctx)
 	return nil
 }
 
-func (a *Activitor) SaveLog() error {
+func (a *Activity) SaveLog() error {
 	ar := a.activeToRecord()
-	err := a.Storage.saveActivityRecord(&ar)
+	err := a.Storage.saveActivityRecord(ar.ActivityID, toJson(ar))
 	if err != nil {
 		return err
 	}
 	ars := a.actionsToRecord()
-	err = a.Storage.saveActionRecord(ars)
+	rs := make([]actionData, len(ars))
+	for _, ar := range ars {
+		rs = append(rs, actionData{
+			actionID: ar.ActionID,
+			data:     toJson(ar),
+		})
+	}
+	err = a.Storage.saveActionRecord(rs)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *Activitor) activeToRecord() ActivityRecord {
-	r := ActivityRecord{
-		ID:        a.ID,
-		Status:    a.Status,
-		StartTime: a.StartTime,
-		EndTime:   a.EndTime,
+func (a *Activity) activeToRecord() *ActivityRecord {
+	r := &ActivityRecord{
+		ActivityID: a.ID,
+		Status:     a.Status,
+		StartTime:  a.StartTime,
+		EndTime:    a.EndTime,
 	}
 	return r
 }
 
-func (a *Activitor) actionsToRecord() []ActionRecord {
+func (a *Activity) actionsToRecord() []ActionRecord {
 	registry := a.Registry
 	var rs []ActionRecord
 	for _, action := range a.Actions {
@@ -113,7 +128,7 @@ func (a *Activitor) actionsToRecord() []ActionRecord {
 	return rs
 }
 
-func (a *Activitor) valueArrayToString(values []reflect.Value) string {
+func (a *Activity) valueArrayToString(values []reflect.Value) string {
 	var buf bytes.Buffer
 	for i, value := range values {
 		if i != 0 {
@@ -132,5 +147,5 @@ func toJson(value interface{}) string {
 	if err != nil {
 		panic(err)
 	}
-	return s
+	return string(s)
 }

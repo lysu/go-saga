@@ -5,14 +5,14 @@ import (
 )
 
 type ActivityRecord struct {
-	ID        uint64         `json:"id"`
-	Status    ActivityStatus `json:"status"`
-	StartTime time.Time      `json:"start"`
-	EndTime   time.Time      `json:"end"`
+	ActivityID uint64         `json:"activityID"`
+	Status     ActivityStatus `json:"status"`
+	StartTime  time.Time      `json:"start"`
+	EndTime    time.Time      `json:"end"`
 }
 
 type ActionRecord struct {
-	ID             uint64       `json:"id"`
+	ActionID       uint64       `json:"actionID"`
 	ActivityID     uint64       `json:"activityID"`
 	Status         ActionStatus `json:"status"`
 	StartTime      time.Time    `json:"start"`
@@ -21,4 +21,9 @@ type ActionRecord struct {
 	DoParams       string       `json:"doParams"`
 	RollbackFuncID string       `json:"rollbackFuncID"`
 	RollbackParams string       `json:"rollbackParams"`
+}
+
+type actionData struct {
+	actionID uint64
+	data     string
 }

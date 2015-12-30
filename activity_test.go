@@ -26,11 +26,11 @@ func Rollback2(ctx activity.ActivityContext) error {
 
 var reg *activity.Registry
 
-var storage *activity.DBStorage
+var storage activity.Storage
 
 func initIt() {
-	storage = nil // TODO..
-	activity.NewRegistry().
+	storage, _ = activity.NewMemStorage()
+	reg = activity.NewRegistry().
 		Add("call1", Call1).Add("call2", Call2).
 		Add("rollback1", Rollback1).Add("rollback2", Rollback2)
 }
@@ -44,7 +44,6 @@ func TestOneActivityExec(t *testing.T) {
 	ctx := activity.ActivityContext{}
 	activity.Start(storage, reg, 3).
 		Then(Call1, 1)(Rollback1).
-		Then(Call2, 2, "233")(Rollback2, 2, "233").
 		Run(ctx)
 
 }
