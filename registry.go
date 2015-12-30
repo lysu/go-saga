@@ -26,6 +26,10 @@ func (r *Registry) Add(funcID string, method interface{}) *Registry {
 	if funcValue.Kind() != reflect.Func {
 		panic("Regist object must be a func")
 	}
+	if funcValue.Type().NumIn() < 1 ||
+		funcValue.Type().In(0) != activityContextType {
+		panic("First argument must use ActivityContext.")
+	}
 	r.idToValue[funcID] = funcValue
 	r.valueToID[funcValue] = funcID
 	r.addParams(funcValue)

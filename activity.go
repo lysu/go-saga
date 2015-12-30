@@ -7,14 +7,12 @@ import (
 	"time"
 )
 
-type Func func(ctx ActivityContext) error
-
 type Activity struct {
 	ID        uint64
 	Status    ActivityStatus
 	StartTime time.Time
 	EndTime   time.Time
-	Actions   []Action
+	Actions   []*Action
 	Registry  *Registry
 	Storage   Storage
 }
@@ -34,30 +32,48 @@ func Start(storage Storage, reg *Registry, biz int) *Activity {
 		ID:        1,
 		Status:    ActivityStarted,
 		StartTime: time.Now(),
-		Actions:   []Action{},
+		Actions:   []*Action{},
 		Registry:  reg,
 		Storage:   storage,
 	}
 }
 
-func (a *Activity) Then(doFunc Func, args ...interface{}) func(backFunc Func, args ...interface{}) *Activity {
+func (a *Activity) Then(doFunc interface{}, args ...interface{}) func(backFunc interface{}, args ...interface{}) *Activity {
 	var doParams []reflect.Value
 	for _, arg := range args {
 		doParams = append(doParams, reflect.ValueOf(arg))
 	}
-	newAction := Action{
+	doFuncValue := reflect.ValueOf(doFunc)
+	if doFuncValue.Kind() != reflect.Func {
+		panic("Regist object must be a func")
+	}
+	if doFuncValue.Type().NumIn() < 1 ||
+		doFuncValue.Type().NumIn() != len(doParams)+1 ||
+		doFuncValue.Type().In(0) != activityContextType {
+		panic("First argument must use ActivityContext.")
+	}
+	newAction := &Action{
 		Status:    ActionStarted,
 		StartTime: time.Now(),
-		DoFunc:    reflect.ValueOf(doFunc),
+		DoFunc:    doFuncValue,
 		DoParams:  doParams,
 	}
 	a.Actions = append(a.Actions, newAction)
-	return func(backFunc Func, args ...interface{}) *Activity {
+	return func(backFunc interface{}, args ...interface{}) *Activity {
 		var backParams []reflect.Value
 		for _, arg := range args {
 			backParams = append(backParams, reflect.ValueOf(arg))
 		}
-		newAction.RollbackFunc = reflect.ValueOf(backFunc)
+		backFuncValue := reflect.ValueOf(backFunc)
+		if backFuncValue.Kind() != reflect.Func {
+			panic("Regist object must be a func")
+		}
+		if backFuncValue.Type().NumIn() < 1 ||
+			backFuncValue.Type().NumIn() != len(backParams)+1 ||
+			backFuncValue.Type().In(0) != activityContextType {
+			panic("First argument must use ActivityContext.")
+		}
+		newAction.RollbackFunc = backFuncValue
 		newAction.RollbackParams = backParams
 		return a
 	}
@@ -65,9 +81,32 @@ func (a *Activity) Then(doFunc Func, args ...interface{}) func(backFunc Func, ar
 
 func (a *Activity) Exec(ctx ActivityContext) {
 	carg := reflect.ValueOf(ctx)
-	for _, action := range a.Actions {
-		action.DoFunc.Call([]reflect.Value{carg})
+	for step, action := range a.Actions {
+		args := append([]reflect.Value{carg}, action.DoParams...)
+		result := action.DoFunc.Call(args)
+		if isReturnError(result) {
+			a.Rollback(ctx, step)
+		}
 	}
+}
+
+func (a *Activity) Rollback(ctx ActivityContext, fromStep int) {
+	carg := reflect.ValueOf(ctx)
+	for i := fromStep; i >= 0; i-- {
+		action := a.Actions[i]
+		args := append([]reflect.Value{carg}, action.RollbackParams...)
+		result := action.RollbackFunc.Call(args)
+		if isReturnError(result) {
+			panic("!212")
+		}
+	}
+}
+
+func isReturnError(result []reflect.Value) bool {
+	if len(result) == 1 && !result[0].IsNil() {
+		return true
+	}
+	return false
 }
 
 func (a *Activity) Run(ctx ActivityContext) error {

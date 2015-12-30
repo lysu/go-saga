@@ -3,24 +3,17 @@ package activity_test
 import (
 	"fmt"
 	"github.com/lysu/one-activity"
+	"strconv"
 	"testing"
 )
 
-func Call1(ctx activity.ActivityContext) error {
-	fmt.Println("call1")
-	return nil
+func Call1(ctx activity.ActivityContext, abc int) error {
+	fmt.Println("call1 " + strconv.Itoa(abc))
+	return fmt.Errorf("1212")
 }
 
 func Rollback1(ctx activity.ActivityContext) error {
-	return nil
-}
-
-func Call2(ctx activity.ActivityContext) error {
-	fmt.Println("call2")
-	return nil
-}
-
-func Rollback2(ctx activity.ActivityContext) error {
+	fmt.Println("rolled")
 	return nil
 }
 
@@ -31,8 +24,7 @@ var storage activity.Storage
 func initIt() {
 	storage, _ = activity.NewMemStorage()
 	reg = activity.NewRegistry().
-		Add("call1", Call1).Add("call2", Call2).
-		Add("rollback1", Rollback1).Add("rollback2", Rollback2)
+		Add("call1", Call1).Add("rollback1", Rollback1)
 }
 
 func TestOneActivityExec(t *testing.T) {
