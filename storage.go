@@ -1,4 +1,4 @@
-package activity
+package saga
 
 type Storage interface {
 	saveActivityRecord(activityID uint64, data string) error

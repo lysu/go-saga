@@ -1,29 +1,29 @@
-package activity_test
+package saga_test
 
 import (
 	"fmt"
-	"github.com/lysu/one-activity"
+	"github.com/lysu/go-saga"
 	"strconv"
 	"testing"
 )
 
-func Call1(ctx activity.ActivityContext, abc int) error {
+func Call1(ctx saga.ActivityContext, abc int) error {
 	fmt.Println("call1 " + strconv.Itoa(abc))
 	return fmt.Errorf("1212")
 }
 
-func Rollback1(ctx activity.ActivityContext) error {
+func Rollback1(ctx saga.ActivityContext) error {
 	fmt.Println("rolled")
 	return nil
 }
 
-var reg *activity.Registry
+var reg *saga.Registry
 
-var storage activity.Storage
+var storage saga.Storage
 
 func initIt() {
-	storage, _ = activity.NewMemStorage()
-	reg = activity.NewRegistry().
+	storage, _ = saga.NewMemStorage()
+	reg = saga.NewRegistry().
 		Add("call1", Call1).Add("rollback1", Rollback1)
 }
 
@@ -33,8 +33,8 @@ func TestOneActivityExec(t *testing.T) {
 	initIt()
 
 	// execute activities
-	ctx := activity.ActivityContext{}
-	activity.Start(storage, reg, 3).
+	ctx := saga.ActivityContext{}
+	saga.Start(storage, reg, 3).
 		Then(Call1, 1)(Rollback1).
 		Run(ctx)
 

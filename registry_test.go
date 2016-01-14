@@ -1,7 +1,7 @@
-package activity_test
+package saga_test
 
 import (
-	"github.com/lysu/one-activity"
+	"github.com/lysu/go-saga"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -11,7 +11,7 @@ func TestRegisterFunc(t *testing.T) {
 
 	f1 := func(a string) string { return a }
 
-	r := activity.NewRegistry()
+	r := saga.NewRegistry()
 	r.Add("f1", f1)
 
 	funcID := r.FindFuncID(reflect.ValueOf(f1))

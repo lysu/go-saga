@@ -1,4 +1,4 @@
-package activity
+package saga
 
 type ActivityStatus uint8
 

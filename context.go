@@ -1,4 +1,4 @@
-package activity
+package saga
 
 import (
 	"golang.org/x/net/context"
