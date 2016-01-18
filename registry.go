@@ -27,8 +27,8 @@ func (r *Registry) Add(funcID string, method interface{}) *Registry {
 		panic("Regist object must be a func")
 	}
 	if funcValue.Type().NumIn() < 1 ||
-		funcValue.Type().In(0) != activityContextType {
-		panic("First argument must use ActivityContext.")
+		funcValue.Type().In(0) != sagaContextType {
+		panic("First argument must use SagaContext.")
 	}
 	r.idToValue[funcID] = funcValue
 	r.valueToID[funcValue] = funcID

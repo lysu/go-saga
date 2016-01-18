@@ -4,14 +4,14 @@ import (
 	"time"
 )
 
-type ActivityRecord struct {
+type ActivityLog struct {
 	ActivityID uint64         `json:"activityID"`
 	Status     ActivityStatus `json:"status"`
 	StartTime  time.Time      `json:"start"`
 	EndTime    time.Time      `json:"end"`
 }
 
-type ActionRecord struct {
+type ActionLog struct {
 	ActionID       uint64       `json:"actionID"`
 	ActivityID     uint64       `json:"activityID"`
 	Status         ActionStatus `json:"status"`

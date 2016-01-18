@@ -1,8 +1,8 @@
 package saga
 
 type Storage interface {
-	saveActivityRecord(activityID uint64, data string) error
-	saveActionRecord(actionRecords []actionData) error
+	saveActivityLog(activityID uint64, data string) error
+	saveActionLogs(actionRecords []actionData) error
 }
 
 type MemStorage struct {
@@ -15,10 +15,10 @@ func NewMemStorage() (Storage, error) {
 	}, nil
 }
 
-func (s *MemStorage) saveActivityRecord(activityID uint64, data string) error {
+func (s *MemStorage) saveActivityLog(activityID uint64, data string) error {
 	return nil
 }
 
-func (s *MemStorage) saveActionRecord(actionRecords []actionData) error {
+func (s *MemStorage) saveActionLogs(actionDatas []actionData) error {
 	return nil
 }

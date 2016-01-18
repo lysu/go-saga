@@ -5,8 +5,8 @@ import (
 	"reflect"
 )
 
-var activityContextType = reflect.TypeOf(ActivityContext{})
+var sagaContextType = reflect.TypeOf(SagaContext{})
 
-type ActivityContext struct {
+type SagaContext struct {
 	context.Context
 }

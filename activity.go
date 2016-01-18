@@ -27,7 +27,7 @@ type Action struct {
 	RollbackParams []reflect.Value
 }
 
-func Start(storage Storage, reg *Registry, biz int) *Activity {
+func Def(storage Storage, reg *Registry) *Activity {
 	return &Activity{
 		ID:        1,
 		Status:    ActivityStarted,
@@ -49,8 +49,8 @@ func (a *Activity) Then(doFunc interface{}, args ...interface{}) func(backFunc i
 	}
 	if doFuncValue.Type().NumIn() < 1 ||
 		doFuncValue.Type().NumIn() != len(doParams)+1 ||
-		doFuncValue.Type().In(0) != activityContextType {
-		panic("First argument must use ActivityContext.")
+		doFuncValue.Type().In(0) != sagaContextType {
+		panic("First argument must use SagaContext.")
 	}
 	newAction := &Action{
 		Status:    ActionStarted,
@@ -70,8 +70,8 @@ func (a *Activity) Then(doFunc interface{}, args ...interface{}) func(backFunc i
 		}
 		if backFuncValue.Type().NumIn() < 1 ||
 			backFuncValue.Type().NumIn() != len(backParams)+1 ||
-			backFuncValue.Type().In(0) != activityContextType {
-			panic("First argument must use ActivityContext.")
+			backFuncValue.Type().In(0) != sagaContextType {
+			panic("First argument must use SagaContext.")
 		}
 		newAction.RollbackFunc = backFuncValue
 		newAction.RollbackParams = backParams
@@ -79,25 +79,28 @@ func (a *Activity) Then(doFunc interface{}, args ...interface{}) func(backFunc i
 	}
 }
 
-func (a *Activity) Exec(ctx ActivityContext) {
+func (a *Activity) Exec(ctx SagaContext) {
 	carg := reflect.ValueOf(ctx)
 	for step, action := range a.Actions {
 		args := append([]reflect.Value{carg}, action.DoParams...)
 		result := action.DoFunc.Call(args)
 		if isReturnError(result) {
-			a.Rollback(ctx, step)
+			a.Compensate(ctx, step-1)
 		}
 	}
 }
 
-func (a *Activity) Rollback(ctx ActivityContext, fromStep int) {
+func (a *Activity) Compensate(ctx SagaContext, fromStep int) {
+	if fromStep < 0 {
+		return
+	}
 	carg := reflect.ValueOf(ctx)
 	for i := fromStep; i >= 0; i-- {
 		action := a.Actions[i]
 		args := append([]reflect.Value{carg}, action.RollbackParams...)
 		result := action.RollbackFunc.Call(args)
 		if isReturnError(result) {
-			panic("!212")
+			panic("!212") //TODO...
 		}
 	}
 }
@@ -109,7 +112,7 @@ func isReturnError(result []reflect.Value) bool {
 	return false
 }
 
-func (a *Activity) Run(ctx ActivityContext) error {
+func (a *Activity) Run(ctx SagaContext) error {
 	err := a.SaveLog()
 	if err != nil {
 		return err
@@ -119,28 +122,28 @@ func (a *Activity) Run(ctx ActivityContext) error {
 }
 
 func (a *Activity) SaveLog() error {
-	ar := a.activeToRecord()
-	err := a.Storage.saveActivityRecord(ar.ActivityID, toJson(ar))
+	activeLog := a.activeLog()
+	err := a.Storage.saveActivityLog(activeLog.ActivityID, toJson(activeLog))
 	if err != nil {
 		return err
 	}
-	ars := a.actionsToRecord()
-	rs := make([]actionData, len(ars))
-	for _, ar := range ars {
-		rs = append(rs, actionData{
-			actionID: ar.ActionID,
-			data:     toJson(ar),
+	actionLogs := a.actionLogs()
+	actionDatas := make([]actionData, 0, len(actionLogs))
+	for _, actionLog := range actionLogs {
+		actionDatas = append(actionDatas, actionData{
+			actionID: actionLog.ActionID,
+			data:     toJson(actionLog),
 		})
 	}
-	err = a.Storage.saveActionRecord(rs)
+	err = a.Storage.saveActionLogs(actionDatas)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *Activity) activeToRecord() *ActivityRecord {
-	r := &ActivityRecord{
+func (a *Activity) activeLog() *ActivityLog {
+	r := &ActivityLog{
 		ActivityID: a.ID,
 		Status:     a.Status,
 		StartTime:  a.StartTime,
@@ -149,11 +152,11 @@ func (a *Activity) activeToRecord() *ActivityRecord {
 	return r
 }
 
-func (a *Activity) actionsToRecord() []ActionRecord {
+func (a *Activity) actionLogs() []ActionLog {
 	registry := a.Registry
-	var rs []ActionRecord
+	var rs []ActionLog
 	for _, action := range a.Actions {
-		rs = append(rs, ActionRecord{
+		rs = append(rs, ActionLog{
 			Status:         action.Status,
 			StartTime:      action.StartTime,
 			EndTime:        action.EndTime,
