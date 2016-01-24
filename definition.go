@@ -1,6 +1,9 @@
 package saga
 
-import "reflect"
+import (
+	"golang.org/x/net/context"
+	"reflect"
+)
 
 // SubTxDefinitions maintains SubTx that use in current application.
 // You MUST init it as singleton, and register SubTxDefinition into it
@@ -26,7 +29,7 @@ type SubTxDefinition struct {
 
 // AddDefinition create definition on the given subTxID, action and compensate
 // then add it into SubTxDefinitions, and return definitions.
-// Action and compensate MUST a function that SagaContext as first argument.
+// Action and compensate MUST a function that context.Context as first argument.
 func (s SubTxDefinitions) AddDefinition(subTxID string, action interface{}, compensate interface{}) SubTxDefinitions {
 	actionMethod := subTxMethod(action)
 	compensateMethod := subTxMethod(compensate)
@@ -50,8 +53,44 @@ func subTxMethod(obj interface{}) reflect.Value {
 		panic("Regist object must be a func")
 	}
 	if funcValue.Type().NumIn() < 1 ||
-		funcValue.Type().In(0) != sagaContextType {
+		funcValue.Type().In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
 		panic("First argument must use SagaContext.")
 	}
 	return funcValue
+}
+
+type paramTypeRegister struct {
+	nameToType map[string]reflect.Type
+	typeToName map[reflect.Type]string
+}
+
+func NewParamTypeRegister() *paramTypeRegister {
+	return &paramTypeRegister{
+		nameToType: make(map[string]reflect.Type),
+		typeToName: make(map[reflect.Type]string),
+	}
+}
+
+func (r *paramTypeRegister) addParams(fc interface{}) {
+	funcValue := subTxMethod(fc)
+	funcType := funcValue.Type()
+	for i := 0; i < funcType.NumIn(); i++ {
+		paramType := funcType.In(i)
+		r.nameToType[paramType.Name()] = paramType
+		r.typeToName[paramType] = paramType.Name()
+	}
+	for i := 0; i < funcType.NumOut(); i++ {
+		returnType := funcType.Out(i)
+		r.nameToType[returnType.Name()] = returnType
+		r.typeToName[returnType] = returnType.Name()
+	}
+}
+
+func (r *paramTypeRegister) FindTypeName(typ reflect.Type) string {
+	return r.typeToName[typ]
+}
+
+func (r *paramTypeRegister) FindType(typeName string) (reflect.Type, bool) {
+	f, ok := r.nameToType[typeName]
+	return f, ok
 }

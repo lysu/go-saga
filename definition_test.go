@@ -3,22 +3,23 @@ package saga_test
 import (
 	"github.com/lysu/go-saga"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 	"testing"
 )
 
-func T1(ctx saga.SagaContext) {
+func T1(ctx context.Context) {
 
 }
 
-func C1(ctx saga.SagaContext) {
+func C1(ctx context.Context) {
 
 }
 
-func T2(ctx saga.SagaContext) {
+func T2(ctx context.Context) {
 
 }
 
-func C2(ctx saga.SagaContext) {
+func C2(ctx context.Context) {
 
 }
 

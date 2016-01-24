@@ -1,24 +1,32 @@
 package saga
 
+type ConsumeOffset int
+
 type Storage interface {
-	saveActivityLog(activityID uint64, data string) error
-	saveActionLogs(actionRecords []actionData) error
+	AppendLog(logID string, data string) error
+	Lookup(logID string) ([]string, error)
 }
 
 type MemStorage struct {
-	data map[string]string
+	data map[string][]string
 }
 
 func NewMemStorage() (Storage, error) {
 	return &MemStorage{
-		data: make(map[string]string),
+		data: make(map[string][]string),
 	}, nil
 }
 
-func (s *MemStorage) saveActivityLog(activityID uint64, data string) error {
+func (s *MemStorage) AppendLog(logID string, data string) error {
+	logQueue, ok := s.data[logID]
+	if !ok {
+		logQueue = []string{}
+		s.data[logID] = logQueue
+	}
+	s.data[logID] = append(s.data[logID], data)
 	return nil
 }
 
-func (s *MemStorage) saveActionLogs(actionDatas []actionData) error {
-	return nil
+func (s *MemStorage) Lookup(logID string) ([]string, error) {
+	return s.data[logID], nil
 }
