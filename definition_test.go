@@ -1,7 +1,6 @@
-package saga_test
+package saga
 
 import (
-	"github.com/lysu/go-saga"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"
@@ -24,12 +23,12 @@ func C2(ctx context.Context) {
 }
 
 func TestSubTxDefinitions(t *testing.T) {
-	txs := saga.SubTxDefinitions{}.
-		AddDefinition("A1", T1, C1).
-		AddDefinition("A2", T2, C2)
-	define, ok := txs.FindDefinition("A1")
+	txs := subTxDefinitions{}.
+		addDefinition("A1", T1, C1).
+		addDefinition("A2", T2, C2)
+	define, ok := txs.findDefinition("A1")
 	assert.True(t, ok)
-	assert.NotNil(t, define.Action)
+	assert.NotNil(t, define.action)
 }
 
 func E() {
@@ -45,6 +44,6 @@ func TestMissFunc(t *testing.T) {
 			}
 			assert.Fail(t, "It must be panic when use E function")
 		}()
-		saga.SubTxDefinitions{}.AddDefinition("Test", T1, E)
+		subTxDefinitions{}.addDefinition("Test", T1, E)
 	}()
 }

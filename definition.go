@@ -5,70 +5,33 @@ import (
 	"reflect"
 )
 
-// SubTxDefinitions maintains SubTx that use in current application.
-// You MUST init it as singleton, and register SubTxDefinition into it
-// before use other Saga function
-type SubTxDefinitions map[string]SubTxDefinition
+type subTxDefinitions map[string]subTxDefinition
 
-// SubTxDefinition defines sub-transaction detail.
-type SubTxDefinition struct {
-
-	// SubTxID identifies a sub-transaction type.
-	// it also be use to persist into saga-log and be lookup
-	// when transaction retry or recovery
-	SubTxID string
-
-	// Action defines the action that sub-transaction will execute.
-	// it will be the reflect.Value of a function
-	Action reflect.Value
-
-	// Action defines the compensate that sub-transaction will execute when sage aborted.
-	// it will be the reflect.Value of a function
-	Compensate reflect.Value
+type subTxDefinition struct {
+	subTxID    string
+	action     reflect.Value
+	compensate reflect.Value
 }
 
-// AddDefinition create definition on the given subTxID, action and compensate
-// then add it into SubTxDefinitions, and return definitions.
-// Action and compensate MUST a function that context.Context as first argument.
-func (s SubTxDefinitions) AddDefinition(subTxID string, action interface{}, compensate interface{}) SubTxDefinitions {
+func (s subTxDefinitions) addDefinition(subTxID string, action interface{}, compensate interface{}) subTxDefinitions {
 	actionMethod := subTxMethod(action)
 	compensateMethod := subTxMethod(compensate)
-	s[subTxID] = SubTxDefinition{
-		SubTxID:    subTxID,
-		Action:     actionMethod,
-		Compensate: compensateMethod,
+	s[subTxID] = subTxDefinition{
+		subTxID:    subTxID,
+		action:     actionMethod,
+		compensate: compensateMethod,
 	}
 	return s
 }
 
-// FindDefinition returns definition by given subTxID and whether definition found.
-func (s SubTxDefinitions) FindDefinition(subTxID string) (SubTxDefinition, bool) {
+func (s subTxDefinitions) findDefinition(subTxID string) (subTxDefinition, bool) {
 	define, ok := s[subTxID]
 	return define, ok
-}
-
-func subTxMethod(obj interface{}) reflect.Value {
-	funcValue := reflect.ValueOf(obj)
-	if funcValue.Kind() != reflect.Func {
-		panic("Regist object must be a func")
-	}
-	if funcValue.Type().NumIn() < 1 ||
-		funcValue.Type().In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
-		panic("First argument must use SagaContext.")
-	}
-	return funcValue
 }
 
 type paramTypeRegister struct {
 	nameToType map[string]reflect.Type
 	typeToName map[reflect.Type]string
-}
-
-func NewParamTypeRegister() *paramTypeRegister {
-	return &paramTypeRegister{
-		nameToType: make(map[string]reflect.Type),
-		typeToName: make(map[reflect.Type]string),
-	}
 }
 
 func (r *paramTypeRegister) addParams(fc interface{}) {
@@ -86,11 +49,24 @@ func (r *paramTypeRegister) addParams(fc interface{}) {
 	}
 }
 
-func (r *paramTypeRegister) FindTypeName(typ reflect.Type) string {
-	return r.typeToName[typ]
+func (r *paramTypeRegister) findTypeName(typ reflect.Type) (string, bool) {
+	f, ok := r.typeToName[typ]
+	return f, ok
 }
 
-func (r *paramTypeRegister) FindType(typeName string) (reflect.Type, bool) {
+func (r *paramTypeRegister) findType(typeName string) (reflect.Type, bool) {
 	f, ok := r.nameToType[typeName]
 	return f, ok
+}
+
+func subTxMethod(obj interface{}) reflect.Value {
+	funcValue := reflect.ValueOf(obj)
+	if funcValue.Kind() != reflect.Func {
+		panic("Regist object must be a func")
+	}
+	if funcValue.Type().NumIn() < 1 ||
+		funcValue.Type().In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
+		panic("First argument must use SagaContext.")
+	}
+	return funcValue
 }

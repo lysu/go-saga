@@ -1,23 +1,30 @@
 package saga
 
-type ConsumeOffset int
-
+// Storage uses to support save and lookup saga log.
 type Storage interface {
+
+	// AppendLog appends log data into log under given logID
 	AppendLog(logID string, data string) error
+
+	// Lookup uses to lookup all log under given logID
 	Lookup(logID string) ([]string, error)
 }
 
-type MemStorage struct {
+type memStorage struct {
 	data map[string][]string
 }
 
+// NewMemStorage creates log storage base on memory.
+// This storage use simple `map[string][]string`, just for TestCase used.
+// NOT use this in product.
 func NewMemStorage() (Storage, error) {
-	return &MemStorage{
+	return &memStorage{
 		data: make(map[string][]string),
 	}, nil
 }
 
-func (s *MemStorage) AppendLog(logID string, data string) error {
+// AppendLog appends log into queue under given logID.
+func (s *memStorage) AppendLog(logID string, data string) error {
 	logQueue, ok := s.data[logID]
 	if !ok {
 		logQueue = []string{}
@@ -27,6 +34,7 @@ func (s *MemStorage) AppendLog(logID string, data string) error {
 	return nil
 }
 
-func (s *MemStorage) Lookup(logID string) ([]string, error) {
+// Lookup lookups log under given logID.
+func (s *memStorage) Lookup(logID string) ([]string, error) {
 	return s.data[logID], nil
 }

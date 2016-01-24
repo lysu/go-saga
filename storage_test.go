@@ -11,6 +11,6 @@ func TestMemStorage(t *testing.T) {
 	assert.NoError(t, err)
 	s.AppendLog("t_11", "{}")
 	looked, err := s.Lookup("t_11")
-	assert.NotNil(t, err)
+	assert.NoError(t, err)
 	assert.Contains(t, looked, "{}")
 }

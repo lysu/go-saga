@@ -16,15 +16,11 @@ var (
 func initIt(mode FailureMode) {
 	storage, _ = saga.NewMemStorage()
 
-	sec = saga.ExecutionCoordinator{
-		SubTxDefinitions:  make(saga.SubTxDefinitions),
-		ParamTypeRegister: saga.NewParamTypeRegister(),
-		LogStorage:        storage,
-	}
+	sec = saga.NewSEC(storage)
 
-	sec.AddDefinition("deduce", DeduceAccount, CompensateDeduce).
-		AddDefinition("deposit", DepositAccount, CompensateDeposit).
-		AddDefinition("test", PTest1, PTest1)
+	sec.AddSubTxDef("deduce", DeduceAccount, CompensateDeduce).
+		AddSubTxDef("deposit", DepositAccount, CompensateDeposit).
+		AddSubTxDef("test", PTest1, PTest1)
 
 	memDB = map[string]int{
 		"foo": 200,

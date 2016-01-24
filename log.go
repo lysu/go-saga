@@ -5,17 +5,27 @@ import (
 	"time"
 )
 
+// LogType present type flag for Log
 type LogType int
 
 const (
+	// SagaStart flag saga stared log
 	SagaStart LogType = iota + 1
+	// SagaEnd flag saga ended log
 	SagaEnd
+	// ActionStart flag action start log
 	ActionStart
+	// ActionEnd flag action end log
 	ActionEnd
+	// CompensateStart flag compensate start log
 	CompensateStart
+	// CompensateEnd flag compensate end log
 	CompensateEnd
 )
 
+// Log presents Saga Log.
+// Saga Log used to log execute status for saga,
+// and SEC use it to compensate and retry.
 type Log struct {
 	Type    LogType     `json:"type,omitempty"`
 	SubTxID string      `json:"subTxID,omitempty"`
@@ -23,11 +33,11 @@ type Log struct {
 	Params  []ParamData `json:"params,omitempty"`
 }
 
-func (l *Log) MustMarshal() string {
+func (l *Log) mustMarshal() string {
 	return mustMarshal(l)
 }
 
-func MustUnmarshal(data string) Log {
+func mustUnmarshalLog(data string) Log {
 	var log Log
 	mustUnmarshal([]byte(data), &log)
 	return log

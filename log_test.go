@@ -1,18 +1,17 @@
-package saga_test
+package saga
 
 import (
-	"github.com/lysu/go-saga"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestMarshalLog(t *testing.T) {
-	l := &saga.Log{
-		Type:    saga.ActionStart,
+	l := &Log{
+		Type:    ActionStart,
 		SubTxID: "1",
-		Params:  []saga.ParamData{},
+		Params:  []ParamData{},
 	}
-	sl := l.MustMarshal()
-	l2 := saga.MustUnmarshal(sl)
-	assert.Equal(t, saga.ActionStart, l2.Type)
+	sl := l.mustMarshal()
+	l2 := mustUnmarshalLog(sl)
+	assert.Equal(t, ActionStart, l2.Type)
 }

@@ -2,7 +2,7 @@ package saga_test
 
 import (
 	"fmt"
-	"golang.org/x/net/context"
+	"github.com/lysu/go-saga"
 	"reflect"
 	"testing"
 )
@@ -13,12 +13,9 @@ func Param1(name string, aga int) {
 
 func TestMarshalParam(t *testing.T) {
 	initIt(OK)
-	ctx := context.Background()
 
-	var sagaID uint64 = 1
-	s := sec.StartSaga(ctx, sagaID)
-	pd := s.MarshalParam([]interface{}{"a", 1})
-	rv := s.UnmarshalParam(pd)
+	pd := saga.MarshalParam(&sec, []interface{}{"a", 1})
+	rv := saga.UnmarshalParam(&sec, pd)
 
 	f := reflect.ValueOf(Param1)
 
@@ -32,13 +29,9 @@ func Param2(name *string, aga int) {
 
 func TestMarshalPtr(t *testing.T) {
 	initIt(OK)
-	ctx := context.Background()
-
-	var sagaID uint64 = 1
-	s := sec.StartSaga(ctx, sagaID)
 	x := "a"
-	pd := s.MarshalParam([]interface{}{&x, 1})
-	rv := s.UnmarshalParam(pd)
+	pd := saga.MarshalParam(&sec, []interface{}{&x, 1})
+	rv := saga.UnmarshalParam(&sec, pd)
 
 	f := reflect.ValueOf(Param2)
 
