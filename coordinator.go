@@ -80,7 +80,7 @@ func (e *ExecutionCoordinator) StartSaga(ctx context.Context, id uint64) *Saga {
 		id:      id,
 		context: ctx,
 		sec:     e,
-		logID:   LogPrefix + strconv.FormatInt(int64(id), 10),
+		logID:   logPrefix + strconv.FormatInt(int64(id), 10),
 	}
 	s.startSaga()
 	return s

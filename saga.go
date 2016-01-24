@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const LogPrefix = "saga_"
+const logPrefix = "saga_"
 
 // Saga presents current execute transaction.
 // A Saga constituted by small sub-transactions.
