@@ -24,7 +24,7 @@ func TestMarshalParam(t *testing.T) {
 }
 
 func Param2(name *string, aga int) {
-	fmt.Printf("%s----%d\n", name, aga)
+	fmt.Printf("%v----%d\n", name, aga)
 }
 
 func TestMarshalPtr(t *testing.T) {

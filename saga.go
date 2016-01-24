@@ -22,7 +22,10 @@ func (s *Saga) startSaga() {
 		Type: SagaStart,
 		Time: time.Now(),
 	}
-	s.sec.logStorage.AppendLog(s.logID, log.mustMarshal())
+	err := s.sec.logStorage.AppendLog(s.logID, log.mustMarshal())
+	if err != nil {
+		panic("Add log Failure")
+	}
 }
 
 // SubTx executes a sub-transaction for given subTxID(which define in SEC initialize) and arguments.
@@ -35,7 +38,10 @@ func (s *Saga) SubTx(subTxID string, args ...interface{}) *Saga {
 		Time:    time.Now(),
 		Params:  MarshalParam(s.sec, args),
 	}
-	s.sec.logStorage.AppendLog(s.logID, log.mustMarshal())
+	err := s.sec.logStorage.AppendLog(s.logID, log.mustMarshal())
+	if err != nil {
+		panic("Add log Failure")
+	}
 
 	params := make([]reflect.Value, 0, len(args)+1)
 	params = append(params, reflect.ValueOf(s.context))
@@ -53,7 +59,10 @@ func (s *Saga) SubTx(subTxID string, args ...interface{}) *Saga {
 		SubTxID: subTxID,
 		Time:    time.Now(),
 	}
-	s.sec.logStorage.AppendLog(s.logID, log.mustMarshal())
+	err = s.sec.logStorage.AppendLog(s.logID, log.mustMarshal())
+	if err != nil {
+		panic("Add log Failure")
+	}
 	return s
 }
 
@@ -63,7 +72,10 @@ func (s *Saga) EndSaga() {
 		Type: SagaEnd,
 		Time: time.Now(),
 	}
-	s.sec.logStorage.AppendLog(s.logID, log.mustMarshal())
+	err := s.sec.logStorage.AppendLog(s.logID, log.mustMarshal())
+	if err != nil {
+		panic("Add log Failure")
+	}
 }
 
 // Abort stop and compensate to rollback to start situation.
@@ -91,7 +103,10 @@ func (s *Saga) compensate(tlog Log) error {
 		SubTxID: tlog.SubTxID,
 		Time:    time.Now(),
 	}
-	s.sec.logStorage.AppendLog(s.logID, clog.mustMarshal())
+	err := s.sec.logStorage.AppendLog(s.logID, clog.mustMarshal())
+	if err != nil {
+		panic("Add log Failure")
+	}
 
 	args := UnmarshalParam(s.sec, tlog.Params)
 
@@ -112,7 +127,10 @@ func (s *Saga) compensate(tlog Log) error {
 		SubTxID: tlog.SubTxID,
 		Time:    time.Now(),
 	}
-	s.sec.logStorage.AppendLog(s.logID, clog.mustMarshal())
+	err = s.sec.logStorage.AppendLog(s.logID, clog.mustMarshal())
+	if err != nil {
+		panic("Add log Failure")
+	}
 	return nil
 }
 

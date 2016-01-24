@@ -4,12 +4,12 @@ go:
 - 1.5.2
 
 install:
-- go get ./...
+- make install_dependencies
 
 script:
-- go test
-- go vet
-- go errcheck
-- go fmt
+- make test
+- make vet
+- make errcheck
+- make fmt
 
 sudo: false
