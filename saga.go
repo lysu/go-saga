@@ -86,6 +86,14 @@ func (s *Saga) Abort() {
 	if err != nil {
 		panic("Abort Panic")
 	}
+	alog := &Log{
+		Type: SagaAbort,
+		Time: time.Now(),
+	}
+	err = s.sec.logStorage.AppendLog(s.logID, alog.mustMarshal())
+	if err != nil {
+		panic("Add log Failure")
+	}
 	for i := len(logs) - 1; i >= 0; i-- {
 		logData := logs[i]
 		log := mustUnmarshalLog(logData)

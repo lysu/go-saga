@@ -77,7 +77,7 @@ func TestDepositFail(t *testing.T) {
 	logs, err := storage.Lookup("saga_1")
 	assert.NoError(t, err)
 	t.Logf("%v", logs)
-	assert.Equal(t, 9, len(logs))
+	assert.Equal(t, 10, len(logs))
 
 }
 

@@ -13,6 +13,8 @@ const (
 	SagaStart LogType = iota + 1
 	// SagaEnd flag saga ended log
 	SagaEnd
+	// SagaAbort flag saga aborted
+	SagaAbort
 	// ActionStart flag action start log
 	ActionStart
 	// ActionEnd flag action end log
