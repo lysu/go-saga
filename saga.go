@@ -1,3 +1,9 @@
+// Package saga provide a framework for Saga-pattern to solve distribute transaction problem.
+// In saga-pattern, Saga is a long running transaction with many small sub-transaction.
+// ExecutionCoordinator(SEC) is coordinator for sub-transactions execute and saga-log written.
+// Sub-transaction is normal business operation, it contain a Action and action's Compensate.
+// Saga-Log is used to record saga process, and SEC will use it to decide next step and how to recovery from error.
+// There is a great speak for Saga-pattern at https://www.youtube.com/watch?v=xDuwrtwYHu8
 package saga
 
 import (
