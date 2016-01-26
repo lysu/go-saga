@@ -2,7 +2,7 @@ package saga
 
 import (
 	"fmt"
-	"go.intra.xiaojukeji.com/golang/sarama"
+	"github.com/Shopify/sarama"
 	"log"
 )
 
