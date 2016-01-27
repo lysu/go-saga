@@ -71,7 +71,7 @@ func NewKafkaStorage(addrs []string) (Storage, error) {
 	return &kafkaStorage{
 		producer: producer,
 		consumer: consumer,
-	}
+	}, nil
 }
 
 // AppendLog appends log into queue under given logID.
@@ -106,8 +106,9 @@ func (s *kafkaStorage) Lookup(logID string) ([]string, error) {
 		case msg := <-partitionConsumer.Messages():
 			log.Printf("Consumed message offset %d\n", msg.Offset)
 			consumed++
-			data = append(data, msg)
-			if data == "" { // ???
+			msgValue := string(msg.Value)
+			data = append(data, msgValue)
+			if msgValue == "" { // ???
 				break
 			}
 		}
