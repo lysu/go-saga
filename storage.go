@@ -114,8 +114,8 @@ func (s *kafkaStorage) Lookup(logID string) ([]string, error) {
 		}
 	}
 
-	log.Printf("Consumed: %d\n", consumed)
-	return data, nil
+	//log.Printf("Consumed: %d\n", consumed)
+	//return data, nil
 }
 
 // Close use to close storage and release resources.
