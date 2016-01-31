@@ -8,9 +8,10 @@
 package saga
 
 import (
-	"golang.org/x/net/context"
 	"reflect"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 const logPrefix = "saga_"

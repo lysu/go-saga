@@ -3,6 +3,7 @@ package saga
 import (
 	"fmt"
 	"github.com/Shopify/sarama"
+	"github.com/wvanbergen/kazoo-go"
 	"log"
 )
 
@@ -56,11 +57,17 @@ func (s *memStorage) Close() error {
 type kafkaStorage struct {
 	producer sarama.SyncProducer
 	consumer sarama.Consumer
+	kz       *kazoo.Kazoo
 }
 
 // NewKafkaStorage creates log storage base on Kafka.
-func NewKafkaStorage(addrs []string) (Storage, error) {
-	producer, err := sarama.NewSyncProducer(addrs, nil)
+func NewKafkaStorage(zkAddrs, brokerAddrs []string) (Storage, error) {
+	conf := kazoo.NewConfig()
+	kz, err := kazoo.NewKazoo(zkAddrs, conf)
+	if err != nil {
+		panic(fmt.Sprintf("Start Zookeeper client failure: %v", err))
+	}
+	producer, err := sarama.NewSyncProducer(brokerAddrs, nil)
 	if err != nil {
 		panic(fmt.Sprintf("Start Kafka Storage failure: %v", err))
 	}
@@ -71,11 +78,22 @@ func NewKafkaStorage(addrs []string) (Storage, error) {
 	return &kafkaStorage{
 		producer: producer,
 		consumer: consumer,
+		kz:       kz,
 	}, nil
 }
 
 // AppendLog appends log into queue under given logID.
 func (s *kafkaStorage) AppendLog(logID string, data string) error {
+	topicExists, err := s.kz.Topic(logID).Exists()
+	if err != nil {
+		return err
+	}
+	if !topicExists {
+		err = s.kz.CreateTopic(logID, 1, 1, map[string]interface{}{})
+		if err != nil {
+			return err
+		}
+	}
 	msg := &sarama.ProducerMessage{Topic: logID, Value: sarama.StringEncoder(data)} // ?? always new?
 	partition, offset, err := s.producer.SendMessage(msg)
 	if err != nil {
