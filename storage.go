@@ -84,7 +84,7 @@ func NewKafkaStorage(zkAddrs, brokerAddrs []string) (Storage, error) {
 
 // AppendLog appends log into queue under given logID.
 func (s *kafkaStorage) AppendLog(logID string, data string) error {
-	topicExists, err := s.kz.Topic(logID).Exists()
+	topicExists, err := s.kz.ExistsTopic(logID)
 	if err != nil {
 		return err
 	}
