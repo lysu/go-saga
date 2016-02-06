@@ -5,6 +5,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/wvanbergen/kazoo-go"
 	"log"
+	"time"
 )
 
 // Storage uses to support save and lookup saga log.
@@ -55,13 +56,16 @@ func (s *memStorage) Close() error {
 }
 
 type kafkaStorage struct {
-	producer sarama.SyncProducer
-	consumer sarama.Consumer
-	kz       *kazoo.Kazoo
+	producer              sarama.SyncProducer
+	consumer              sarama.Consumer
+	kz                    *kazoo.Kazoo
+	partitionNumbers      int
+	replicaNumbers        int
+	consumeReturnDuration time.Duration
 }
 
 // NewKafkaStorage creates log storage base on Kafka.
-func NewKafkaStorage(zkAddrs, brokerAddrs []string) (Storage, error) {
+func NewKafkaStorage(zkAddrs, brokerAddrs []string, partitions, replicas int, returnDuration time.Duration) (Storage, error) {
 	conf := kazoo.NewConfig()
 	kz, err := kazoo.NewKazoo(zkAddrs, conf)
 	if err != nil {
@@ -76,9 +80,12 @@ func NewKafkaStorage(zkAddrs, brokerAddrs []string) (Storage, error) {
 		panic(err)
 	}
 	return &kafkaStorage{
-		producer: producer,
-		consumer: consumer,
-		kz:       kz,
+		producer:              producer,
+		consumer:              consumer,
+		kz:                    kz,
+		partitionNumbers:      partitions,
+		replicaNumbers:        replicas,
+		consumeReturnDuration: returnDuration,
 	}, nil
 }
 
@@ -89,7 +96,7 @@ func (s *kafkaStorage) AppendLog(logID string, data string) error {
 		return err
 	}
 	if !topicExists {
-		err = s.kz.CreateTopic(logID, 1, 1, map[string]interface{}{})
+		err = s.kz.CreateTopic(logID, s.partitionNumbers, s.replicaNumbers, map[string]interface{}{})
 		if err != nil {
 			return err
 		}
@@ -117,8 +124,11 @@ func (s *kafkaStorage) Lookup(logID string) ([]string, error) {
 		}
 	}()
 
+	timer := time.NewTimer(s.consumeReturnDuration)
+	defer timer.Stop()
 	data := []string{}
 	consumed := 0
+consumer_loop:
 	for {
 		select {
 		case msg := <-partitionConsumer.Messages():
@@ -126,14 +136,14 @@ func (s *kafkaStorage) Lookup(logID string) ([]string, error) {
 			consumed++
 			msgValue := string(msg.Value)
 			data = append(data, msgValue)
-			if msgValue == "" { // ???
-				break
-			}
+			timer.Reset(s.consumeReturnDuration)
+		case <-timer.C:
+			break consumer_loop
 		}
 	}
 
-	//log.Printf("Consumed: %d\n", consumed)
-	//return data, nil
+	log.Printf("Consumed: %d\n", consumed)
+	return data, nil
 }
 
 // Close use to close storage and release resources.

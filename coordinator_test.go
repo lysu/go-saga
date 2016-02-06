@@ -1,6 +1,10 @@
 package saga
 
-import "golang.org/x/net/context"
+import (
+	"golang.org/x/net/context"
+	"testing"
+	"time"
+)
 
 // This example show how to initialize an Saga execution coordinator(SEC) and add Sub-transaction to it, then start a transfer transaction.
 // In transfer transaction we deduce `100` from foo at first, then deposit 100 into `bar`, deduce & deduce wil both success or rollbacked.
@@ -27,7 +31,13 @@ func ExampleExecutionCoordinator_transfer() {
 
 	// 2. Init SEC as global SINGLETON(this demo not..), and add Sub-transaction definition into SEC.
 
-	storage, _ := NewMemStorage()
+	storage, _ := NewKafkaStorage(
+		[]string{"0.0.0.0:2181"},
+		[]string{"0.0.0.0:9092"},
+		1,
+		1,
+		50*time.Millisecond,
+	)
 	sec := NewSEC(storage)
 	sec.AddSubTxDef("deduce", DeduceAccount, CompensateDeduce).
 		AddSubTxDef("deposit", DepositAccount, CompensateDeposit)
@@ -38,11 +48,15 @@ func ExampleExecutionCoordinator_transfer() {
 	amount := 100
 	ctx := context.Background()
 
-	var sagaID uint64 = 1
+	var sagaID uint64 = 2
 	sec.StartSaga(ctx, sagaID).
 		SubTx("deduce", from, amount).
 		SubTx("deposit", to, amount).
 		EndSaga()
 
 	// 4. done.
+}
+
+func TestExample(t *testing.T) {
+	ExampleExecutionCoordinator_transfer()
 }
