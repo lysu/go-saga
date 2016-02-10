@@ -5,6 +5,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/wvanbergen/kazoo-go"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,15 @@ type Storage interface {
 
 	// Close use to close storage and release resources
 	Close() error
+
+	// LogIDs returns exists logID
+	LogIDs() ([]string, error)
+
+	// Cleanup cleans up all log data in logID
+	Cleanup(logID string) error
+
+	// LastLog fetch last log entry with given logID
+	LastLog(logID string) (string, error)
 }
 
 type memStorage struct {
@@ -50,9 +60,36 @@ func (s *memStorage) Lookup(logID string) ([]string, error) {
 	return s.data[logID], nil
 }
 
-// Close use to close storage and release resources.
+// Close uses to close storage and release resources.
 func (s *memStorage) Close() error {
 	return nil
+}
+
+// LogIDs uses to take all Log ID av in current storage
+func (s *memStorage) LogIDs() ([]string, error) {
+	ids := make([]string, 0, len(s.data))
+	for id := range s.data {
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+func (s *memStorage) Cleanup(logID string) error {
+	delete(s.data, logID)
+	return nil
+}
+
+func (s *memStorage) LastLog(logID string) (string, error) {
+	logData, ok := s.data[logID]
+	if !ok {
+		return "", fmt.Errorf("LogData %s not found")
+	}
+	sizeOfLog := len(logData)
+	if sizeOfLog == 0 {
+		return "", fmt.Errorf("LogData is empty")
+	}
+	lastLog := logData[sizeOfLog-1]
+	return lastLog, nil
 }
 
 type kafkaStorage struct {
@@ -155,4 +192,29 @@ func (s *kafkaStorage) Close() error {
 		log.Println(err2)
 	}
 	return nil
+}
+
+// LogIDs returns av saga topic in kafka.
+func (s *kafkaStorage) LogIDs() ([]string, error) {
+	topics, err := s.kz.Topics()
+	if err != nil {
+		return nil, err
+	}
+	sagaTopics := make([]string, 0, len(topics))
+	for _, topic := range topics {
+		if strings.HasPrefix(topic.Name, logPrefix) {
+			sagaTopics = append(sagaTopics, topic.Name)
+		}
+	}
+	return sagaTopics, nil
+}
+
+// Cleanup cleans log data for given logID
+func (s *kafkaStorage) Cleanup(logID string) error {
+	return s.kz.DeleteTopic(logID)
+}
+
+// LastLog consume last log
+func (s *kafkaStorage) LastLog(logID string) (string, error) {
+	return "", nil
 }

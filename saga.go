@@ -84,6 +84,10 @@ func (s *Saga) EndSaga() {
 	if err != nil {
 		panic("Add log Failure")
 	}
+	err = s.sec.logStorage.Cleanup(s.logID)
+	if err != nil {
+		panic("Clean up topic failure")
+	}
 }
 
 // Abort stop and compensate to rollback to start situation.

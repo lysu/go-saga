@@ -1,6 +1,7 @@
 package saga
 
 import (
+	"fmt"
 	"golang.org/x/net/context"
 	"reflect"
 	"strconv"
@@ -71,6 +72,20 @@ func (e *ExecutionCoordinator) MustFindParamType(name string) reflect.Type {
 		panic("Find Param Type Panic: " + name)
 	}
 	return typ
+}
+
+func (e *ExecutionCoordinator) StartCoordinator() {
+	logIDs, err := e.logStorage.LogIDs()
+	if err != nil {
+		panic("Fetch logid Panic")
+	}
+	for _, logID := range logIDs {
+		lastLogData, err := e.logStorage.LastLog(logID)
+		if err != nil {
+			panic("Fetch last log Panic")
+		}
+		fmt.Println(lastLogData)
+	}
 }
 
 // StartSaga start a new saga, returns the saga was started.
