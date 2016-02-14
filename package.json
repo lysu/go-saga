@@ -1,0 +1,28 @@
+{
+  "name": "go-saga",
+  "version": "1.0.0",
+  "description": "[![GoDoc](https://godoc.org/github.com/lysu/go-saga?status.svg)](https://godoc.org/github.com/lysu/go-saga) [![Build Status](https://travis-ci.org/lysu/go-saga.svg?branch=master)](https://travis-ci.org/lysu/go-saga)",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "cz-conventional-changelog": "^1.1.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lysu/go-saga.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lysu/go-saga/issues"
+  },
+  "homepage": "https://github.com/lysu/go-saga#readme",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
