@@ -82,7 +82,7 @@ func (s *memStorage) Cleanup(logID string) error {
 func (s *memStorage) LastLog(logID string) (string, error) {
 	logData, ok := s.data[logID]
 	if !ok {
-		return "", fmt.Errorf("LogData %s not found")
+		return "", fmt.Errorf("LogData %s not found", logID)
 	}
 	sizeOfLog := len(logData)
 	if sizeOfLog == 0 {
