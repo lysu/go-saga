@@ -3,7 +3,7 @@ package saga
 import (
 	"fmt"
 	"github.com/Shopify/sarama"
-	"github.com/wvanbergen/kazoo-go"
+	"github.com/lysu/kazoo-go"
 	"log"
 	"strings"
 	"time"
