@@ -2,16 +2,14 @@ package saga
 
 import (
 	"golang.org/x/net/context"
-	"testing"
 	"time"
 )
 
 // This example show how to initialize an Saga execution coordinator(SEC) and add Sub-transaction to it, then start a transfer transaction.
 // In transfer transaction we deduce `100` from foo at first, then deposit 100 into `bar`, deduce & deduce wil both success or rollbacked.
-func ExampleExecutionCoordinator_transfer() {
+func Example_sagaTransaction() {
 
 	// 1. Define sub-transaction method, anonymous method is NOT required, Just define them as normal way.
-
 	DeduceAccount := func(ctx context.Context, account string, amount int) error {
 		// Do deduce amount from account, like: account.money - amount
 		return nil
@@ -55,8 +53,4 @@ func ExampleExecutionCoordinator_transfer() {
 		EndSaga()
 
 	// 4. done.
-}
-
-func TestExample(t *testing.T) {
-	ExampleExecutionCoordinator_transfer()
 }

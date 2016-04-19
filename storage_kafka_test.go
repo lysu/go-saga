@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestKafkaLogAppend(t *testing.T) {
+func KafkaLogAppend(t *testing.T) {
 
 	assert := assert.New(t)
 
