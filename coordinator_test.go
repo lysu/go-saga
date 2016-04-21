@@ -1,8 +1,11 @@
-package saga
+package saga_test
 
 import (
 	"golang.org/x/net/context"
 	"time"
+
+	"github.com/lysu/go-saga"
+	_ "github.com/lysu/go-saga/storage/kafka"
 )
 
 // This example show how to initialize an Saga execution coordinator(SEC) and add Sub-transaction to it, then start a transfer transaction.
@@ -28,15 +31,13 @@ func Example_sagaTransaction() {
 	}
 
 	// 2. Init SEC as global SINGLETON(this demo not..), and add Sub-transaction definition into SEC.
+	saga.StorageConfig.Kafka.ZkAddrs = []string{"0.0.0.0:2181"}
+	saga.StorageConfig.Kafka.BrokerAddrs = []string{"0.0.0.0:9092"}
+	saga.StorageConfig.Kafka.Partitions = 1
+	saga.StorageConfig.Kafka.Replicas = 1
+	saga.StorageConfig.Kafka.ReturnDuration = 50 * time.Millisecond
 
-	storage, _ := NewKafkaStorage(
-		[]string{"0.0.0.0:2181"},
-		[]string{"0.0.0.0:9092"},
-		1,
-		1,
-		50*time.Millisecond,
-	)
-	sec := NewSEC(storage)
+	sec := saga.NewSEC()
 	sec.AddSubTxDef("deduce", DeduceAccount, CompensateDeduce).
 		AddSubTxDef("deposit", DepositAccount, CompensateDeposit)
 

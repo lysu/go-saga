@@ -1,4 +1,4 @@
-package saga_test
+package memory
 
 import (
 	"github.com/lysu/go-saga"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestMemStorage(t *testing.T) {
-	s, err := saga.NewMemStorage()
+	s, err := newMemStorage()
 	assert.NoError(t, err)
 	err = s.AppendLog("t_11", "{}")
 	assert.NoError(t, err)

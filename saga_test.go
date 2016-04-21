@@ -3,20 +3,17 @@ package saga_test
 import (
 	"fmt"
 	"github.com/lysu/go-saga"
+	_ "github.com/lysu/go-saga/storage/memory"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"
 )
 
-var (
-	storage saga.Storage
-	sec     saga.ExecutionCoordinator
-)
+var sec saga.ExecutionCoordinator
 
 func initIt(mode FailureMode) {
-	storage, _ = saga.NewMemStorage()
 
-	sec = saga.NewSEC(storage)
+	sec = saga.NewSEC()
 
 	sec.AddSubTxDef("deduce", DeduceAccount, CompensateDeduce).
 		AddSubTxDef("deposit", DepositAccount, CompensateDeposit).
@@ -48,7 +45,7 @@ func TestAllSuccess(t *testing.T) {
 	assert.Equal(t, 100, memDB[from])
 	assert.Equal(t, 100, memDB[to])
 
-	logs, err := storage.Lookup("saga_1")
+	logs, err := saga.LogStorage().Lookup("saga_1")
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(logs))
 
@@ -74,7 +71,7 @@ func TestDepositFail(t *testing.T) {
 	assert.Equal(t, 200, memDB[from])
 	assert.Equal(t, -100, memDB[to]) // BUG fix test
 
-	logs, err := storage.Lookup("saga_1")
+	logs, err := saga.LogStorage().Lookup("saga_1")
 	assert.NoError(t, err)
 	t.Logf("%v", logs)
 	assert.Equal(t, 0, len(logs))

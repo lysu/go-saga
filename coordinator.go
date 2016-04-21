@@ -2,6 +2,7 @@ package saga
 
 import (
 	"fmt"
+	"github.com/juju/errors"
 	"golang.org/x/net/context"
 	"reflect"
 	"strconv"
@@ -12,16 +13,14 @@ import (
 // - Saga log storage.
 // - Sub-transaction definition with it's parameter info.
 type ExecutionCoordinator struct {
-	logStorage        Storage
 	subTxDefinitions  subTxDefinitions
 	paramTypeRegister *paramTypeRegister
 }
 
 // NewSEC creates Saga Execution Coordinator
 // This method require supply a log Storage to save & lookup log during tx execute.
-func NewSEC(logStorage Storage) ExecutionCoordinator {
+func NewSEC() ExecutionCoordinator {
 	return ExecutionCoordinator{
-		logStorage:       logStorage,
 		subTxDefinitions: make(subTxDefinitions),
 		paramTypeRegister: &paramTypeRegister{
 			nameToType: make(map[string]reflect.Type),
@@ -74,18 +73,19 @@ func (e *ExecutionCoordinator) MustFindParamType(name string) reflect.Type {
 	return typ
 }
 
-func (e *ExecutionCoordinator) StartCoordinator() {
-	logIDs, err := e.logStorage.LogIDs()
+func (e *ExecutionCoordinator) StartCoordinator() error {
+	logIDs, err := LogStorage().LogIDs()
 	if err != nil {
-		panic("Fetch logid Panic")
+		return errors.Annotate(err, "Fetch logs failure")
 	}
 	for _, logID := range logIDs {
-		lastLogData, err := e.logStorage.LastLog(logID)
+		lastLogData, err := LogStorage().LastLog(logID)
 		if err != nil {
-			panic("Fetch last log Panic")
+			return errors.Annotate(err, "Fetch last log panic")
 		}
 		fmt.Println(lastLogData)
 	}
+	return nil
 }
 
 // StartSaga start a new saga, returns the saga was started.
@@ -95,7 +95,7 @@ func (e *ExecutionCoordinator) StartSaga(ctx context.Context, id uint64) *Saga {
 		id:      id,
 		context: ctx,
 		sec:     e,
-		logID:   logPrefix + strconv.FormatInt(int64(id), 10),
+		logID:   LogPrefix + strconv.FormatInt(int64(id), 10),
 	}
 	s.startSaga()
 	return s

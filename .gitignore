@@ -25,5 +25,6 @@ _testmain.go
 *.prof
 
 .idea
+node_modules
 
 # Created by .ignore support plugin (hsz.mobi)
