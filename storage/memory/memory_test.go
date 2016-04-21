@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"github.com/lysu/go-saga"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
