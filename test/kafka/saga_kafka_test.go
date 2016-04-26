@@ -1,21 +1,25 @@
 package saga_test
 
 import (
+	"golang.org/x/net/context"
+
 	"fmt"
 	"github.com/lysu/go-saga"
-	_ "github.com/lysu/go-saga/storage/memory"
+	_ "github.com/lysu/go-saga/storage/kafka"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"testing"
+	"time"
 )
 
-var sec saga.ExecutionCoordinator
+func initKafka(mode FailureMode) {
 
-func initIt(mode FailureMode) {
+	saga.StorageConfig.Kafka.ZkAddrs = []string{"0.0.0.0:2181"}
+	saga.StorageConfig.Kafka.BrokerAddrs = []string{"0.0.0.0:9092"}
+	saga.StorageConfig.Kafka.Partitions = 1
+	saga.StorageConfig.Kafka.Replicas = 1
+	saga.StorageConfig.Kafka.ReturnDuration = 50 * time.Millisecond
 
-	sec = saga.NewSEC()
-
-	sec.AddSubTxDef("deduce", DeduceAccount, CompensateDeduce).
+	saga.AddSubTxDef("deduce", DeduceAccount, CompensateDeduce).
 		AddSubTxDef("deposit", DepositAccount, CompensateDeposit).
 		AddSubTxDef("test", PTest1, PTest1)
 
@@ -27,9 +31,9 @@ func initIt(mode FailureMode) {
 	testMode = mode
 }
 
-func TestAllSuccess(t *testing.T) {
+func _TestAllSuccess_kafka(t *testing.T) {
 
-	initIt(OK)
+	initKafka(OK)
 
 	from, to := "foo", "bar"
 	amount := 100
@@ -37,7 +41,7 @@ func TestAllSuccess(t *testing.T) {
 	ctx := context.Background()
 
 	var sagaID uint64 = 1
-	sec.StartSaga(ctx, sagaID).
+	saga.StartSaga(ctx, sagaID).
 		ExecSub("deduce", from, amount).
 		ExecSub("deposit", to, amount).
 		EndSaga()
@@ -47,14 +51,14 @@ func TestAllSuccess(t *testing.T) {
 
 	logs, err := saga.LogStorage().Lookup("saga_1")
 	assert.NoError(t, err)
-	assert.Equal(t, 0, len(logs))
+	assert.Equal(t, 6, len(logs))
 
 }
 
-func TestDepositFail(t *testing.T) {
+func _TestDepositFail_kafka(t *testing.T) {
 
 	// initInStartup
-	initIt(DepositFail)
+	initKafka(DepositFail)
 
 	from, to := "foo", "bar"
 	amount := 100
@@ -62,7 +66,7 @@ func TestDepositFail(t *testing.T) {
 	ctx := context.Background()
 
 	var sagaID uint64 = 1
-	sec.StartSaga(ctx, sagaID).
+	saga.StartSaga(ctx, sagaID).
 		ExecSub("deduce", from, amount).
 		ExecSub("deposit", to, amount).
 		EndSaga()
@@ -74,7 +78,7 @@ func TestDepositFail(t *testing.T) {
 	logs, err := saga.LogStorage().Lookup("saga_1")
 	assert.NoError(t, err)
 	t.Logf("%v", logs)
-	assert.Equal(t, 0, len(logs))
+	assert.Equal(t, 10, len(logs))
 
 }
 

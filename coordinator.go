@@ -73,7 +73,7 @@ func (e *ExecutionCoordinator) MustFindSubTxDef(subTxID string) subTxDefinition 
 func (e *ExecutionCoordinator) MustFindParamName(typ reflect.Type) string {
 	name, ok := e.paramTypeRegister.findTypeName(typ)
 	if !ok {
-		panic("Find Param Name Panic: " + name)
+		panic("Find Param Name Panic: " + typ.String())
 	}
 	return name
 }
