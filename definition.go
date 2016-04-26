@@ -66,7 +66,7 @@ func subTxMethod(obj interface{}) reflect.Value {
 	}
 	if funcValue.Type().NumIn() < 1 ||
 		funcValue.Type().In(0) != reflect.TypeOf((*context.Context)(nil)).Elem() {
-		panic("First argument must use SagaContext.")
+		panic("First argument must use context.Context.")
 	}
 	return funcValue
 }

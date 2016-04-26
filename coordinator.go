@@ -8,6 +8,9 @@ import (
 	"strconv"
 )
 
+// DefaultSEC is default SEC use by package method
+var DefaultSEC ExecutionCoordinator = NewSEC()
+
 // ExecutionCoordinator presents Saga Execution Coordinator.
 // It manages:
 // - Saga log storage.
@@ -27,6 +30,18 @@ func NewSEC() ExecutionCoordinator {
 			typeToName: make(map[reflect.Type]string),
 		},
 	}
+}
+
+// AddSubTxDef create & add definition base on given subTxID, action and compensate, and return current SEC.
+//
+// This execute as Default SEC.
+// subTxID identifies a sub-transaction type, it also be use to persist into saga-log and be lookup for retry
+// action defines the action that sub-transaction will execute.
+// compensate defines the compensate that sub-transaction will execute when sage aborted.
+//
+// action and compensate MUST a function that context.Context as first argument.
+func AddSubTxDef(subTxID string, action interface{}, compensate interface{}) *ExecutionCoordinator {
+	return DefaultSEC.AddSubTxDef(subTxID, action, compensate)
 }
 
 // AddSubTxDef create & add definition base on given subTxID, action and compensate, and return current SEC.
@@ -86,6 +101,12 @@ func (e *ExecutionCoordinator) StartCoordinator() error {
 		fmt.Println(lastLogData)
 	}
 	return nil
+}
+
+// StartSaga start a new saga, returns the saga was started in Default SEC.
+// This method need execute context and UNIQUE id to identify saga instance.
+func StartSaga(ctx context.Context, id uint64) *Saga {
+	return DefaultSEC.StartSaga(ctx, id)
 }
 
 // StartSaga start a new saga, returns the saga was started.

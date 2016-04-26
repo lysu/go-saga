@@ -37,8 +37,7 @@ func Example_sagaTransaction() {
 	saga.StorageConfig.Kafka.Replicas = 1
 	saga.StorageConfig.Kafka.ReturnDuration = 50 * time.Millisecond
 
-	sec := saga.NewSEC()
-	sec.AddSubTxDef("deduce", DeduceAccount, CompensateDeduce).
+	saga.AddSubTxDef("deduce", DeduceAccount, CompensateDeduce).
 		AddSubTxDef("deposit", DepositAccount, CompensateDeposit)
 
 	// 3. Start a saga to transfer 100 from foo to bar.
@@ -48,9 +47,9 @@ func Example_sagaTransaction() {
 	ctx := context.Background()
 
 	var sagaID uint64 = 2
-	sec.StartSaga(ctx, sagaID).
-		SubTx("deduce", from, amount).
-		SubTx("deposit", to, amount).
+	saga.StartSaga(ctx, sagaID).
+		ExecSub("deduce", from, amount).
+		ExecSub("deposit", to, amount).
 		EndSaga()
 
 	// 4. done.

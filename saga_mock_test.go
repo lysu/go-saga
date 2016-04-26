@@ -38,8 +38,8 @@ func TestAllSuccess(t *testing.T) {
 
 	var sagaID uint64 = 1
 	sec.StartSaga(ctx, sagaID).
-		SubTx("deduce", from, amount).
-		SubTx("deposit", to, amount).
+		ExecSub("deduce", from, amount).
+		ExecSub("deposit", to, amount).
 		EndSaga()
 
 	assert.Equal(t, 100, memDB[from])
@@ -63,8 +63,8 @@ func TestDepositFail(t *testing.T) {
 
 	var sagaID uint64 = 1
 	sec.StartSaga(ctx, sagaID).
-		SubTx("deduce", from, amount).
-		SubTx("deposit", to, amount).
+		ExecSub("deduce", from, amount).
+		ExecSub("deposit", to, amount).
 		EndSaga()
 
 	// assert

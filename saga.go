@@ -55,9 +55,9 @@ func (s *Saga) startSaga() {
 	}
 }
 
-// SubTx executes a sub-transaction for given subTxID(which define in SEC initialize) and arguments.
+// ExecSub executes a sub-transaction for given subTxID(which define in SEC initialize) and arguments.
 // it returns current Saga.
-func (s *Saga) SubTx(subTxID string, args ...interface{}) *Saga {
+func (s *Saga) ExecSub(subTxID string, args ...interface{}) *Saga {
 	subTxDef := s.sec.MustFindSubTxDef(subTxID)
 	log := &Log{
 		Type:    ActionStart,
